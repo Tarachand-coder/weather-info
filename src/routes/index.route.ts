@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import userRoute from './user.route';
-import taskRouter from './task.route';
-import authRoute from './auth.route';
 import weatherRoute from './weather.route';
+import taskRouter from './task.route';
+import userRoute from './user.route';
+import authRoute from './auth.route';
 import blogRoute from './blog.route';
 
 const router = Router();

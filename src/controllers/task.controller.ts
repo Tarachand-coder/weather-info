@@ -17,6 +17,7 @@ export default class TaskController {
         try {
             const params: IAPIParams = {
                 reqQuery: req.query,
+                resLocals: res.locals
             }
             
             const result: any = await TaskService.getTask(params);

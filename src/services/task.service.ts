@@ -1,18 +1,27 @@
 import { responseMessage, errorManager } from '../config/errorMessage.config';
 import { TaskDBService } from '../dbServies/task.db.service';
-import { ITaskReq } from '../interfaces/task.interface';
 import { mongooseObjectId } from '../utils/common.utill';
+import { ITaskReq } from '../interfaces/task.interface';
 import constants from '../config/constants.config'; 
 const { STATUS, USERTYPE }  = constants;
-const { ENABLED, DISABLED } = STATUS;  
+const { ENABLED, DISABLED } = STATUS;
+const { USER } = USERTYPE;
 const { 
     SUCCESS, ALERTSUCCESS, BAD_REQUEST,
  } = errorManager;
 
 export class TaskService {
     static async getTask(parameters: any) {
-        const { reqQuery } = parameters;
-        const result: any = await TaskDBService.getTask({ ...reqQuery as ITaskReq });
+        const { reqQuery, resLocals } = parameters;
+        if (resLocals.user.userType == USER) {
+            var userId = resLocals.user._id;
+        }
+        const taskQuery : ITaskReq = {
+            ...reqQuery,
+            userId
+        }
+        
+        const result: any = await TaskDBService.getTask(taskQuery);
         if (!result) {
             return {
 				...ALERTSUCCESS,
@@ -43,7 +52,7 @@ export class TaskService {
 
     static async addTask(parameters: any) {
         const { reqBody, resLocals } = parameters;
-        const userId = resLocals.auth ? resLocals.auth._id : null;
+        const userId = resLocals.auth ? resLocals.user._id : null;
         const addParams = {
             title: reqBody.title,
             description: reqBody.description,

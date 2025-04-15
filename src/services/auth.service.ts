@@ -9,9 +9,11 @@ import Crypto from '../utils/encryptDecrypt.util';
 import JWT from '../utils/jwtToken.util';
 import dotenv from 'dotenv';
 const { SUCCESS, BAD_REQUEST, INTERNAL_SERVER_ERROR, UNAUTHORIZED } = errorManager;
-const { STATUS, TOKEN_TYPE }  = constants;
-const { ENABLED } = STATUS;
-const { ACCESS } = TOKEN_TYPE;
+const { STATUS, TOKEN_TYPE, USERTYPE, TOKEN }  = constants;
+const { ENABLED, DISABLED } = STATUS;
+const { EXPIRE_IN, REFRESH_IN } = TOKEN;
+const { ACCESS, BEARER } = TOKEN_TYPE;
+const { USER } = USERTYPE;
 
 dotenv.config();
 
@@ -23,13 +25,13 @@ export default class AuthService {
         const applicationCredentialDetail: any = await AuthDBService.getApplicationCredentials({
             clientId: param.apiClientId,
             clientSecret: param.apiClientSecret,
-            status: 'enabled' 
+            status: ENABLED
         });
 
         if (!applicationCredentialDetail) {
             return {
                 ...UNAUTHORIZED,
-                message: 'Unauthorized User'
+                message: responseMessage.AUTH009
             }
         }
 
@@ -43,18 +45,17 @@ export default class AuthService {
         });
         const createToken: any = await AuthDBService.createRequestToken({
             requestToken,
-            userType: 'customer',
+            userType: USER,
             applicationId: applicationCredentialDetail._id
         });
 
         const tokenResponse: ITokenRes = {
             token: createToken.requestToken,
-            tokenType: 'Bearer'
+            tokenType: BEARER
         }
 
         return {
             ...SUCCESS,
-            message: 'get data',
             resData: tokenResponse
         }
     }
@@ -82,7 +83,7 @@ export default class AuthService {
             );
             return {
                 ...SUCCESS,
-                message: 'Device register',
+                message: responseMessage.AUTH0010,
                 resData: deviceExist
             }     
         }
@@ -96,7 +97,7 @@ export default class AuthService {
 		);
         return {
             ...SUCCESS,
-            message: 'Device Register',
+            message: responseMessage.AUTH0010,
             resData: addDevice
         }
     }
@@ -126,28 +127,28 @@ export default class AuthService {
         const userAuthenticateCriteria: any = { email: params.email, status: 'enabled' };
         const loggedInUser: any = await AuthDBService.userAuthentication(userAuthenticateCriteria);
         if (!loggedInUser || !loggedInUser?.password) {
-            return { error: { ...BAD_REQUEST, message: 'Unauthrized Data' } }
+            return { error: { ...BAD_REQUEST, message: responseMessage.AUTH009 } }
         }
         const isPasswordMatch = Crypto.decrypt(loggedInUser.password) == params.password;
         if (!isPasswordMatch) {
-            return { error: { ...BAD_REQUEST, message: 'Password does not match' } };
+            return { error: { ...BAD_REQUEST, message: responseMessage.AUTH0011 } };
         }
         const accessTokenSignIn: string = JWT.sign({
             userId: loggedInUser._id,
             authId: authId,
             applicationDetail
-        }, '60d');
+        }, EXPIRE_IN);
         const refreshTokenSignIn: string = JWT.sign({
             userId: loggedInUser._id,
             authId: authId,
             applicationDetail
-        }, '90d');
+        }, REFRESH_IN);
         const createAccessToken: any = await AuthDBService.createAccessToken(
             { _id: authId },
             {
                 accessToken: accessTokenSignIn,
                 refreshToken: refreshTokenSignIn,
-                userId: loggedInUser._id,
+                userId: mongooseObjectId(loggedInUser._id),
                 status: ENABLED
             }
         );
@@ -158,7 +159,7 @@ export default class AuthService {
         }
         return {
             ...SUCCESS,
-            devMessage: 'login',
+            devMessage: responseMessage.AUTH0012,
             resData: loginRes
         }
     }
@@ -170,11 +171,11 @@ export default class AuthService {
             ...params
         });
         if (!isTokenExist) {
-            return { ...UNAUTHORIZED, resCode: 0, message: 'Token is not exist' }    
+            return { ...UNAUTHORIZED, resCode: 0, message: responseMessage.AUTH0013 }    
         }
         const checkTokenIsExpired = await JWT.checkTokenIsExpired(isTokenExist.refreshToken);
         if (checkTokenIsExpired) {
-            await AuthDBService.updateTokenStatus({ _id: isTokenExist._id }, { status: 'disabled' })
+            await AuthDBService.updateTokenStatus({ _id: isTokenExist._id }, { status: ENABLED })
         }
 
         const tokenData = await JWT.verify(params.refreshToken);
@@ -191,7 +192,7 @@ export default class AuthService {
 			_id: mongooseObjectId(),
 			requestToken: isTokenExist.requestToken,
 			userId: isTokenExist.userId,
-			status: 'enabled',
+			status: ENABLED,
 			accessToken: '',
 			refreshToken: '',
 			deviceTableId: mongooseObjectId(isTokenExist._id),
@@ -201,23 +202,22 @@ export default class AuthService {
 			userId: isTokenExist.userId,
 			authId: createAuthRecord._id,
 			applicationDetail: appDetail
-		}, '60d');
+		}, EXPIRE_IN);
 		const refreshTokenSign = JWT.sign({
 			userId: isTokenExist.userId,
 			authId: createAuthRecord._id,
 			applicationDetail: appDetail
-		}, '90d');
+		}, REFRESH_IN);
 		createAuthRecord.accessToken = accessTokenSign;
 		createAuthRecord.refreshToken = refreshTokenSign;
-		await AuthDBService.updateTokenStatus({ _id: isTokenExist._id }, { status: 'disabled' });
+		await AuthDBService.updateTokenStatus({ _id: isTokenExist._id }, { status: DISABLED });
 		await AuthDBService.createRequestToken(createAuthRecord);
 		return {
 			...SUCCESS,
-			message: 'new token',
 			resData: {
 				token: accessTokenSign,
-				tokenType: 'access',
-				expiresIn: '60d',
+				tokenType: ACCESS, 
+				expiresIn: EXPIRE_IN,
 				refreshToken: refreshTokenSign
 			}
 		};
@@ -229,7 +229,7 @@ export default class AuthService {
         const authId = params.auth._id;
 		const isLoggedOut = await AuthDBService.updateAuthDetail(
 			{ _id: mongooseObjectId(authId) },
-			{ status: 'disabled' }
+			{ status: DISABLED }
 		);
 		return { ...SUCCESS, message: responseMessage.AUTH007 };
     }

@@ -1,8 +1,8 @@
 import * as express from 'express';
 import checkPermission from '../middlewares/permission.middleware';
 import BlogController from '../controllers/blog.controller';
-import authVerify from '../middlewares/auth.middleware';
 import validations from '../validations/blog.validation';
+import authVerify from '../middlewares/auth.middleware';
 import { validate }  from 'express-validation';
 const { blogAddReq, blogUpdateReq } = validations;
 

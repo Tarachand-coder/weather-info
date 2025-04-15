@@ -40,6 +40,10 @@ export const responseMessage = {
     AUTH007: 'Bearer token has expired',
     AUTH008: 'Client details invalid',
     AUTH009: 'Unauthorized User',
+    AUTH0010: 'Device register',
+    AUTH0011: 'Password does not match',
+    AUTH0012: 'Login',
+    AUTH0013: 'Token is not exist',
 
     TASK_0001: 'Task added successfully',
     TASK_0002: 'Task update successfully',

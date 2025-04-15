@@ -1,9 +1,10 @@
 import exp from 'constants';
 import * as express from 'express';
+import checkPermission from '../middlewares/permission.middleware';
 import TaskController from '../controllers/task.controller';
-import { validate } from 'express-validation';
 import validations from '../validations/task.validation';
 import authVerify from '../middlewares/auth.middleware';
+import { validate } from 'express-validation';
 const { taskAddReq, taskUpdateReq } = validations;
 
 class TaskRouter {
@@ -27,6 +28,7 @@ class TaskRouter {
         this.router.get(
             '/tasks/:id',
             authVerify.tokenValidate,
+            checkPermission.permission,
             TaskController.getTaskDetail
         );
     }
@@ -43,7 +45,7 @@ class TaskRouter {
     private putRouter(): void {
         this.router.put(
             '/tasks/:id',
-            // validate(taskUpdateReq),
+            validate(taskUpdateReq),
             authVerify.tokenValidate,
             TaskController.updateTask
         );

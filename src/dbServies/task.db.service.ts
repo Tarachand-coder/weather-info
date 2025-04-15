@@ -1,9 +1,10 @@
 import TaskModel from '../models/task.model';
+import { mongooseObjectId } from '../utils/common.utill';
 
 export class TaskDBService {
     static async getTask(filters: any) {
         try {
-            return await TaskModel.find();
+            return await TaskModel.find(filters);
         }
         catch(error) {
             return null;

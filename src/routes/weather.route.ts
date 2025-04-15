@@ -1,8 +1,8 @@
 import * as express from 'express';
 import WeatherController from '../controllers/weather.controller';
-import { validate }  from 'express-validation';
 import validations from '../validations/weather.validation';
 import authVerify from '../middlewares/auth.middleware';
+import { validate }  from 'express-validation';
 const { weatherReq } = validations;
 
 class WeatherRouter {

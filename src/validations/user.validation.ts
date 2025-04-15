@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import constants from '../config/constants.config'; 
 const { STATUS }  = constants;
-const { ENABLED, DISABLED, DELETED } = STATUS;
+const { ENABLED, DISABLED } = STATUS;
 
 export default {
     userAddReq: {

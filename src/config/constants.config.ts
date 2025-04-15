@@ -24,6 +24,10 @@ const constants = {
         'ACCESS': 'Access',
         'BEARER': 'Bearer'
     },
+    TOKEN: {
+        EXPIRE_IN: '60d',
+        REFRESH_IN: '90d'
+    },
     ENCRYPTION_KEY: 'qazwsxedcrfvtgbyhnujmikolp1234!@',
 	IV_LENGTH: 16,  
 }

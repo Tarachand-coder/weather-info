@@ -30,11 +30,13 @@ class UserRouter {
         this.router.get(
             '/users',
             authVerify.tokenValidate,
+            checkPermission.permission,
             UserController.getUser
         );
         this.router.get(
             '/users/:id',
             authVerify.tokenValidate,
+            checkPermission.permission,
             UserController.getUserDetail
         );
     }
